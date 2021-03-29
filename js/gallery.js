@@ -1,62 +1,93 @@
-import galleryItems from './gallery-items.js'
-import refs from './refs.js'
-import listImg from './list-img.js'
+import pictures from './gallery-items.js'
 
+const galleryList = document.querySelector('.js-gallery');
+const modal = document.querySelector('.js-lightbox');
+const modalImg = document.querySelector('.lightbox__image');
+const modalBtn = document.querySelector('.lightbox__button');
+const overlay = document.querySelector('.lightbox__overlay');
 
-refs.galleryList.innerHTML = listImg(galleryItems);
+let currentIndex = 0;
 
-refs.galleryList.addEventListener('click', onModalOpen);
-refs.modalCloseBtn.addEventListener('click', onModalClose);
-refs.modalOverlay.addEventListener('click', onModalClose);
-window.addEventListener('keydown', onModalClose);
-window.addEventListener('keydown', onModalChangeImg);
+pictures.forEach (el => {
+    galleryList.insertAdjacentHTML (
+     'beforeend', `
+     <li class="gallery__item">
+ <a
+ class="gallery__link"
+ href="${el.original}">
+ 
+ <img
+   class="gallery__image"
+   src="${el.preview}"
+   data-source="${el.original}"
+   alt="${el.description}"
+ />
+ </a>
+ </li>
+ `
+ )   
+});
 
-function getImgAtr(src, alt) {
-    refs.modalImg.src = src
-    refs.modalImg.alt = alt
+const openModal = function (event) {
+    event.preventDefault();
+    if (event.target.nodeName !== 'IMG') return;
+
+    modal.classList.add('is-open');
+    modalImg.src = event.target.dataset.source;
+    console.log(modalImg.src)
+
+document.addEventListener('keydown', keyClose);
+modalBtn.addEventListener('click', closeModal);
+overlay.addEventListener('click', closeModal);
 }
 
-function onModalOpen(event) {
-    event.preventDefault()
-    refs.modal.classList.add('is-open')
-    getImgAtr(event.target.dataset.source, event.target.alt)
+const closeModal = function() {
+    modal.classList.remove('is-open')
+    modal.src = ''
+    
+    document.removeEventListener('keydown', keyClose);
+    modalBtn.removeEventListener('click', closeModal);
+    overlay.removeEventListener('click', closeModal);
 }
 
-function onModalClose(event) {
-    if (event.target === event.currentTarget || event.code === "Escape"){
-        refs.modal.classList.remove('is-open')
+const prevImg = () => {
+if (currentIndex > 0 && currentIndex <= pictures.length - 1){
+    currentIndex -= 1;
+    modalImg.src = pictures[currentIndex].original;
+} else if (currentIndex === 0){
+    currentIndex = pictures.length -1;
+    modalImg.src = pictures[currentIndex].original;
+}
+}
 
-        getImgAtr('','')
+const nextImg = () => {
+if (currentIndex >= 0 && currentIndex < pictures.length - 1){
+    currentIndex += 1;
+    modalImg.src = pictures[currentIndex].original;
+} else if (currentIndex = pictures.length - 1) {
+    currentIndex = 0;
+    modalImg.src = pictures[currentIndex].original
+}
+}
+
+const keyClose = (e) => {
+    switch (e.key) {
+        case 'Escape':
+        closeModal()
+        break;
+
+        case 'ArrowLeft':
+            prevImg();
+            break;
+
+            case 'ArrowRight':
+                nextImg();
+                break;
+        default: 
+
+            return;
+
     }
 }
 
-const arrayImg = galleryItems.map(item => item.original)
-const arrayAlt = galleryItems.map(item => item.description)
-
-function onModalChangeImg(event) {
-    let indexImg = arrayImg.indexOf(refs.modalImg.src);
-    let indexAlt = indexImg
-    const indexLastElem = arrayImg.length-1
-
-    if (event.code === 'ArrowRight') {
-        if (indexImg < indexLastElem){
-            indexImg += 1;
-            indexAlt += 1;
-            getImgAtr(arrayImg[indexImg], arrayAlt[indexImg])
-        }
-        else if (indexImg = indexLastElem){
-            getImgAtr(arrayImg[0], arrayAlt[0]);
-        }
-    }
-        else if (event.code === 'ArrowLeft'){
-            if (indexImg > 0) {
-                indexImg -= 1;
-                indexAlt -= 1;
-                getImgAtr(arrayImg[indexImg], arrayAlt[indexImg]);
-            }
-        
-        else {
-            getImgAtr(arrayImg[indexLastElem], arrayAlt[indexLastElem])
-        }
-    }
-}
+galleryList.addEventListener('click', openModal);
